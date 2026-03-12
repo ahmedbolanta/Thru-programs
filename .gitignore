@@ -1,0 +1,21 @@
+# Build outputs
+build/
+*.bin
+*.elf
+*.o
+*.a
+*.d
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Thru CLI config (contains private keys!)
+.thru/
