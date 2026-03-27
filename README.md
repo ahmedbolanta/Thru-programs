@@ -1,28 +1,32 @@
 # Thru Network Alphanet Developer Guide
 
-A comprehensive, step-by-step guide to building on Thru Network's Alphanet. This repository includes setup instructions, token operations, nameservice usage, and four complete smart contract examples with deployed addresses you can interact with today.
+A comprehensive, step-by-step guide to building on Thru Network's Alphanet. This repository includes setup instructions, token operations, nameservice usage, and five complete smart contract examples with deployed addresses you can interact with today.
 
 ## 🌐 What is Thru Network?
 
 Thru Network is a high-performance blockchain platform. This guide covers development on the Alphanet testnet.
 
+---
+
 ## 📋 Table of Contents
 
-1. [Prerequisites](#prerequisites)
-2. [CLI Installation](#cli-installation)
-3. [Account Setup](#account-setup)
-4. [Token Operations](#token-operations)
-5. [Nameservice](#nameservice)
-6. [Program Development](#program-development)
-7. [Deployed Programs](#deployed-programs)
+- [Prerequisites](#prerequisites)
+- [CLI Installation](#cli-installation)
+- [Account Setup](#account-setup)
+- [Funding Your Account](#funding-your-account)
+- [Token Operations](#token-operations)
+- [Nameservice](#nameservice)
+- [Program Development](#program-development)
+- [Deployed Programs](#deployed-programs)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Prerequisites
 
-- **macOS** (Apple Silicon M1/M2/M3) or Linux
-- **Rust** toolchain installed ([rustup.rs](https://rustup.rs))
-- **Homebrew** (macOS)
+- macOS (Apple Silicon M1/M2/M3) or Linux
+- Rust toolchain installed ([rustup.rs](https://rustup.rs))
+- Homebrew (macOS)
 
 ---
 
@@ -41,26 +45,22 @@ brew install bufbuild/buf/buf
 ### Step 2: Install Thru CLI
 
 ```bash
-cargo install thru-cli --locked
+cargo install thru
 ```
 
-**Important:** Always use `--locked` to avoid dependency conflicts.
+> **Note:** The CLI was renamed from `thru-cli` to `thru` in v0.2.13+. All commands now use `thru` instead of `thru-cli`.
 
 ### Step 3: Verify Installation
 
 ```bash
-thru-cli --version
+thru --version
 ```
-
-Expected output: `thru-cli 0.2.1` or higher
 
 ### Step 4: Verify Network Connection
 
 ```bash
-thru-cli getversion
+thru rpc getversion
 ```
-
-Expected output should show node version and RPC details.
 
 ---
 
@@ -69,7 +69,7 @@ Expected output should show node version and RPC details.
 ### Step 1: Create a Key
 
 ```bash
-thru-cli keys generate mykey
+thru keys generate mykey
 ```
 
 This creates a keypair stored in `~/.thru/cli/config.yaml`
@@ -77,22 +77,36 @@ This creates a keypair stored in `~/.thru/cli/config.yaml`
 ### Step 2: View Your Public Key
 
 ```bash
-thru-cli keys list
+thru keys list
 ```
 
 ### Step 3: Get Your Full Public Key Address
 
 ```bash
-thru-cli keys show mykey
+thru keys show mykey
 ```
 
-**Save this address!** It starts with `ta...` and you'll need it for all operations.
+Save this address — it starts with `ta...` and you'll need it for all operations.
 
 ### Step 4: Create On-Chain Account
 
 ```bash
-thru-cli account create mykey
+thru account create mykey
 ```
+
+---
+
+## Funding Your Account
+
+Alphanet resets periodically. After a reset, accounts need to be recreated and funded via the faucet.
+
+```bash
+# Withdraw tokens FROM the faucet TO your account (up to 10,000 per tx)
+thru faucet withdraw default 1000
+thru faucet withdraw mykey 1000
+```
+
+> **Important:** Use `withdraw` (not `deposit`) to fund your account from the faucet. `deposit` sends tokens *into* the faucet program.
 
 ---
 
@@ -101,32 +115,27 @@ thru-cli account create mykey
 ### Create a Token Mint
 
 ```bash
-thru-cli token initialize-mint <YOUR_PUBLIC_KEY> <TOKEN_NAME> <32_BYTE_HEX_SEED> --fee-payer mykey
-```
-
-**Example:**
-```bash
-thru-cli token initialize-mint taXXX...XXX MYTOKEN 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --fee-payer mykey
+thru token initialize-mint <YOUR_PUBLIC_KEY> <TOKEN_NAME> <32_BYTE_HEX_SEED>
 ```
 
 ### Create a Token Account
 
 ```bash
-thru-cli token initialize-account <MINT_ADDRESS> <YOUR_PUBLIC_KEY> <32_BYTE_HEX_SEED> --fee-payer mykey
+thru token initialize-account <MINT_ADDRESS> <YOUR_PUBLIC_KEY> <32_BYTE_HEX_SEED>
 ```
 
 ### Mint Tokens
 
 ```bash
-thru-cli token mint-to <MINT_ADDRESS> <TOKEN_ACCOUNT_ADDRESS> <YOUR_PUBLIC_KEY> <AMOUNT> --fee-payer mykey
+thru token mint-to <MINT_ADDRESS> <TOKEN_ACCOUNT_ADDRESS> <YOUR_PUBLIC_KEY> <AMOUNT>
 ```
 
-**Note:** Amount includes decimals. For 1000 tokens with 9 decimals: `1000000000000`
+> **Note:** Amount includes decimals. For 1000 tokens with 9 decimals: `1000000000000`
 
 ### Transfer Tokens
 
 ```bash
-thru-cli token transfer <FROM_TOKEN_ACCOUNT> <TO_TOKEN_ACCOUNT> <AMOUNT> --fee-payer mykey
+thru token transfer <FROM_TOKEN_ACCOUNT> <TO_TOKEN_ACCOUNT> <AMOUNT>
 ```
 
 ---
@@ -136,36 +145,27 @@ thru-cli token transfer <FROM_TOKEN_ACCOUNT> <TO_TOKEN_ACCOUNT> <AMOUNT> --fee-p
 ### Create a Registrar (Top-Level Domain)
 
 ```bash
-thru-cli nameservice init-root <REGISTRAR_NAME> --fee-payer mykey
-```
-
-**Example:**
-```bash
-thru-cli nameservice init-root mydomain --fee-payer mykey
+thru nameservice init-root mydomain
 ```
 
 ### Register a Subdomain
 
 ```bash
-thru-cli nameservice register-subdomain <SUBDOMAIN_NAME> <REGISTRAR_ADDRESS> --fee-payer mykey
+thru nameservice register-subdomain <SUBDOMAIN_NAME> <REGISTRAR_ADDRESS>
 ```
 
 ### Add Records to Domain
 
 ```bash
-thru-cli nameservice append-record <DOMAIN_ADDRESS> <KEY> "<VALUE>" --fee-payer mykey
-```
-
-**Example:**
-```bash
-thru-cli nameservice append-record taXXX...XXX twitter "@myhandle" --fee-payer mykey
-thru-cli nameservice append-record taXXX...XXX bio "Developer building on Thru" --fee-payer mykey
+thru nameservice append-record <DOMAIN_ADDRESS> twitter "@myhandle"
+thru nameservice append-record <DOMAIN_ADDRESS> bio "Developer building on Thru"
+thru nameservice append-record <DOMAIN_ADDRESS> github "https://github.com/myhandle"
 ```
 
 ### Resolve a Domain
 
 ```bash
-thru-cli nameservice resolve <DOMAIN_ADDRESS>
+thru nameservice resolve <DOMAIN_ADDRESS>
 ```
 
 ---
@@ -177,26 +177,22 @@ thru-cli nameservice resolve <DOMAIN_ADDRESS>
 The automatic installer may fail on some systems. Use manual installation:
 
 ```bash
-# Download toolchain for your platform
 # For Apple Silicon (M1/M2/M3):
 curl -L "https://github.com/user-attachments/files/19416109/thru-toolchain-Darwin-arm64-v0.2.6.tar.gz" -o /tmp/toolchain.tar.gz
 
-# Extract to correct location
 mkdir -p ~/.thru/sdk/toolchain
 tar -xzf /tmp/toolchain.tar.gz -C ~/.thru/sdk/toolchain
 
 # Move contents up one level (important!)
 mv ~/.thru/sdk/toolchain/thru-toolchain-Darwin-arm64-v0.2.6/* ~/.thru/sdk/toolchain/
 rmdir ~/.thru/sdk/toolchain/thru-toolchain-Darwin-arm64-v0.2.6
-
-# Clean up
 rm /tmp/toolchain.tar.gz
 ```
 
 ### Install C SDK
 
 ```bash
-thru-cli dev sdk install c
+thru dev sdk install c
 ```
 
 ### Program Structure
@@ -228,28 +224,55 @@ $(call make-bin,my_program_c,my_program,,-ltn_sdk)
 
 ```bash
 # Build
-cd my-program
-make
+cd my-program && make
+
+# Fund account if needed
+thru faucet withdraw default 1000
 
 # Deploy
-thru-cli program create my_program_seed ~/my-program/build/thruvm/bin/my_program_c.bin
+thru program create my_program_seed ~/my-program/build/thruvm/bin/my_program_c.bin
+
+# Check deployment status
+thru program status my_program_seed
 ```
 
 ### Interacting with Programs
 
-1. **Derive account address:**
 ```bash
-thru-cli program derive-address <PROGRAM_ADDRESS> <SEED>
+# Derive account address
+thru program derive-address <PROGRAM_ADDRESS> <SEED>
+
+# Create state proof
+thru txn make-state-proof creating <DERIVED_ADDRESS>
+
+# Execute transaction (note: --authority instead of --fee-payer)
+thru txn execute --fee 0 --readwrite-accounts <DERIVED_ADDRESS> <PROGRAM_ADDRESS> <INSTRUCTION_HEX>
 ```
 
-2. **Create state proof:**
-```bash
-thru-cli txn make-state-proof creating <DERIVED_ADDRESS>
-```
+### Instruction Data Format
 
-3. **Execute transaction:**
-```bash
-thru-cli txn execute --fee 0 --fee-payer mykey --readwrite-accounts <DERIVED_ADDRESS> <PROGRAM_ADDRESS> <INSTRUCTION_HEX>
+#### Encoding Rules
+- All multi-byte integers are **little-endian**
+- Seeds are ASCII hex-encoded and **zero-padded to 32 bytes** (64 hex chars)
+- The Create instruction is **146 bytes** (includes 104-byte state proof)
+
+#### Little-Endian Quick Reference
+
+| Value | uint32 LE | uint64 LE |
+|-------|-----------|-----------|
+| 0 | `00000000` | `0000000000000000` |
+| 1 | `01000000` | `0100000000000000` |
+| 104 | `68000000` | `6800000000000000` |
+| 500 | `f4010000` | `f401000000000000` |
+| 1000 | `e8030000` | `e803000000000000` |
+
+#### Create Instruction Layout (146 bytes)
+```
+00000000                    # instruction_type = 0 (4 bytes LE)
+0200                        # account_index = 2 (2 bytes LE)
+[seed padded to 32 bytes]   # 32 bytes = 64 hex chars
+68000000                    # proof_size = 104 (4 bytes LE)
+[proof data]                # 104 bytes from make-state-proof
 ```
 
 ---
@@ -258,14 +281,16 @@ thru-cli txn execute --fee 0 --fee-payer mykey --readwrite-accounts <DERIVED_ADD
 
 These programs are live on Alphanet. You can interact with them directly!
 
+> **Note:** Alphanet resets periodically. Addresses below reflect the most recent deployment.
+
 ### 1. Counter Program
 
 A simple counter that demonstrates state management.
 
 | | Address |
-|---|---------|
-| **Program** | `taSgjTJTEgwm64_fYDIYYPGJZsqUdbAFkG1FmDRUCt6uyr` |
-| **Meta** | `taEcLF3gkAOt1WJZBkJxtePZlcNiBFZhq6v3nsMsndKCT0` |
+|---|---|
+| Program | `taXKZxw-pjK1qmLwS0Gm4ZUVuWbeIYAalOFFE3dzSX_i3g` |
+| Meta | `taJQrrpSZkLWEGeKW5t7HaaMWO6DFf9J1Io_0v1ZPU-h0j` |
 
 **Features:**
 - Create counter (instruction `0x00`)
@@ -273,14 +298,16 @@ A simple counter that demonstrates state management.
 
 [View Source Code](./programs/counter/)
 
+---
+
 ### 2. Voting Program
 
 A decentralized voting system for proposals.
 
 | | Address |
-|---|---------|
-| **Program** | `taP41Wj4PMLed_IL9b3ErpK_qbc4UOl8PGD6hfUIt4waGN` |
-| **Meta** | `taCR1Rx9YY2HyfpGaXdelKEo6UKON34mGlmV9zxDWRhcRE` |
+|---|---|
+| Program | `taMCg1h3GYqR9_fyZPIA55MeTQG7TvKmpqf4ftTHrp61J_` |
+| Meta | `taUShzPYg9R2U9B0plY-UYc45oqqPgeqwaS53lvgY2bjMr` |
 
 **Features:**
 - Create proposal (instruction `0x00`)
@@ -290,14 +317,16 @@ A decentralized voting system for proposals.
 
 [View Source Code](./programs/voting/)
 
+---
+
 ### 3. Escrow Program
 
 A DeFi primitive for conditional fund transfers.
 
 | | Address |
-|---|---------|
-| **Program** | `ta-v68MOqS0J0IAuWuR8yvvU5sApM85Bc18EglXdZnywpw` |
-| **Meta** | `taxqi8wcsx3FcoPd9oFHMTKchbgEAAt0rw00n0rBC3MVdo` |
+|---|---|
+| Program | `taeu7BZAZx89eeCluEzYdpIQkG0BI7HdlMUQN6HVQQ58GY` |
+| Meta | `taK0nXb2jTaPlgjJ5LXhAW1p1LUklgQWExkF70FKZIQ88x` |
 
 **Features:**
 - Initialize escrow (instruction `0x00`)
@@ -307,14 +336,16 @@ A DeFi primitive for conditional fund transfers.
 
 [View Source Code](./programs/escrow/)
 
+---
+
 ### 4. Guestbook Program
 
 On-chain message storage demonstrating string handling.
 
 | | Address |
-|---|---------|
-| **Program** | `taTPjHiniTYVemWFK-cOlRqzOBCoiIdQNXQ-prqtJ7eOtK` |
-| **Meta** | `taCikRjdVS_9ae83bdndVC1Lx7b6e40TCBVBIHGYrTexo4` |
+|---|---|
+| Program | `taXqFPQKYei0k7J5lq5GoMuw2VBydfmA7DuewfCUxYsGrD` |
+| Meta | `taHC0ebrvFAscbbbAiF-KPMJrzKnMI7gL8a2pGc-yq87ke` |
 
 **Features:**
 - Create guestbook (instruction `0x00`)
@@ -325,10 +356,58 @@ On-chain message storage demonstrating string handling.
 
 ---
 
+### 5. Auction Program
+
+A fully on-chain English auction with bid validation and winner claiming.
+
+| | Address |
+|---|---|
+| Program | `ta-ZnLvUsT9oJ5YFllzOpNNqPkkvxHkB4XRXyfmTdt15zx` |
+| Meta | `tayA3-ayoBqUOk-1rXIejft5Ko6cnRqV1FTqlw7ECBgg5w` |
+
+**Features:**
+- Create auction (instruction `0x00`, 146 bytes with proof)
+- Place bid (instruction `0x01`, 14 bytes)
+- End auction (instruction `0x02`, 6 bytes)
+- Claim winnings (instruction `0x03`, 6 bytes)
+
+**Error Codes:**
+
+| Code | Name |
+|------|------|
+| `0x5000` | INVALID_INSTRUCTION_DATA_SIZE |
+| `0x5001` | INVALID_INSTRUCTION_TYPE |
+| `0x5002` | ACCOUNT_CREATE_FAILED |
+| `0x5006` | AUCTION_ENDED |
+| `0x5007` | AUCTION_NOT_ENDED |
+| `0x5008` | BID_TOO_LOW |
+| `0x5009` | ALREADY_CLAIMED |
+| `0x500A` | NO_BIDS |
+
+[View Source Code](./programs/auction/)
+
+---
+
+## Troubleshooting
+
+| Error | Solution |
+|-------|----------|
+| `Fee payer account not found` | Fund with faucet: `thru faucet withdraw <key> 1000` |
+| `TN_RUNTIME_TXN_ERR_INVALID_PROGRAM_ACCOUNT` | Program doesn't exist; redeploy |
+| `Timeout expired` | Network flakiness; just retry the command |
+| `BadRecordMac` transport error | Network issue; retry immediately |
+| `manager_error: Account not available (0x0504)` | Run `thru program status <seed>` — program may already be deployed |
+| `user_error=0x1000` | Check instruction data byte count |
+| `Upload buffer exists (cleanup needed)` | Run `thru uploader cleanup <seed>_temporary` |
+| Toolchain not found for Darwin-x86_64 | Use manual arm64 download (see Program Development section) |
+
+---
+
 ## 📚 Resources
 
 - [Thru Network Documentation](https://docs.thru.org/)
 - [Building a C Program Guide](https://docs.thru.org/program-development/building-a-c-program)
+- [CLI Reference](https://docs.thru.org/cli-reference/overview)
 
 ---
 
@@ -340,4 +419,4 @@ Found an issue or want to improve this guide? Open a PR!
 
 ## 📄 License
 
-MIT License - feel free to use this guide and code examples.
+MIT License — feel free to use this guide and code examples.
